@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from email.mime import base
 import os
 import sys
 from dotenv import load_dotenv
@@ -34,6 +35,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # DEBUG
 DEBUG = os.getenv('DEBUG')
 
+AUTH_USER_MODEL = "contas.MyUser"
 
 ALLOWED_HOSTS = [ 
 		'localhost', 
@@ -75,7 +77,8 @@ THIRD_APPS = [
 ]
 PROJECT_APPS = [
     'apps.base',
-    #'apps.myapp',
+    'apps.pages',
+    'apps.contas',
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_APPS + PROJECT_APPS
 
@@ -127,6 +130,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # apps
+                'base.context_processors.context_social', 
             ],
         },
     },
@@ -212,4 +217,15 @@ REST_FRAMEWORK={
     #...
     'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler', 
     
+}
+
+# --- Messages --- #
+from django.contrib.messages import constants
+
+MESSAGE_TAGS = {
+	constants.ERROR: 'alert-danger',
+	constants.WARNING: 'alert-warning',
+	constants.DEBUG: 'alert-danger',
+	constants.SUCCESS: 'alert-success',
+	constants.INFO: 'alert-info',
 }
