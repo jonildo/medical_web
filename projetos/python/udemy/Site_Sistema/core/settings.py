@@ -13,20 +13,17 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import sys
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
-# Adicionar essa tag para que nosso projeto encontre o .env
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 
 # base_dir config
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_DIR = os.path.join(BASE_DIR,'templates')
 STATIC_DIR=os.path.join(BASE_DIR,'static')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-# Diz para Django onde estão nossos aplicativos
+# Adicionar essa tag para que nosso projeto encontre o .env
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 APPS_DIR = str(os.path.join(BASE_DIR,'apps'))
 sys.path.insert(0, APPS_DIR)
@@ -38,8 +35,29 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv('DEBUG')
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [ 
+		'localhost', 
+		'127.0.0.1',  
+]
 
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    	'X-Register',
+]
+
+# CORS Config
+CORS_ORIGIN_ALLOW_ALL = True  
+# CORS_ORIGIN_ALLOW_ALL como True, o que permite que qualquer site acesse seus recursos.
+# Defina como False e adicione o site no CORS_ORIGIN_WHITELIST onde somente o site da lista acesse os seus recursos.
+
+CORS_ALLOW_CREDENTIALS = False 
+
+CORS_ORIGIN_WHITELIST = ['http://meusite.com',] # Lista.
+
+if not DEBUG:
+	SECURE_SSL_REDIRECT = True # redireciona para https
+	ADMINS = [(os.getenv('SUPER_USER'), os.getenv('EMAIL'))]
+	SESSION_COOKIE_SECURE = True
+	CSRF_COOKIE_SECURE = True 
 
 # Application definition
 
@@ -53,11 +71,11 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
 ]
 THIRD_APPS = [
-    ...
+    "corsheaders",
 ]
 PROJECT_APPS = [
     'apps.base',
-    'apps.myapp',
+    #'apps.myapp',
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_APPS + PROJECT_APPS
 
@@ -86,12 +104,15 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     'requestlogs.middleware.RequestLogsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'core.urls'
 
@@ -156,8 +177,39 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Logs
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'requestlogs_to_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'info.log',
+        },
+    },
+    'loggers': {
+        'requestlogs': {
+            'handlers': ['requestlogs_to_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+REQUESTLOGS = {
+    'SECRETS': ['password', 'token'],
+    'METHODS': ('PUT', 'PATCH', 'POST', 'DELETE'),
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+REST_FRAMEWORK={
+    #...
+    'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler', 
+    
+}
